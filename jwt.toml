@@ -1,0 +1,4 @@
+[sites.example]
+key = "Zm9vYmFy" # foobar
+url = "https://example.com/jwt"
+exp = "24h"
