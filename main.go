@@ -41,6 +41,7 @@ func main() {
 	})
 
 	http.HandleFunc("/jwt", handleJwt(mwf))
+	http.HandleFunc("/login", handleLogin(mwf))
 
 	port := os.Getenv("PORT")
 	log.Print("Listening on port " + port)
