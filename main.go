@@ -10,6 +10,7 @@ import (
 )
 
 var mwforumDb = defaultValue(os.Getenv("MWFORUM_DB"), "/mwforum")
+var mwforumTablePrefix = defaultValue(os.Getenv("MWFORUM_TABLE_PREFIX"), "")
 var mwforumCookiePrefix = defaultValue(os.Getenv("MWFORUM_COOKIE_PREFIX"), "mwf_")
 
 var jwtConfigPath = defaultValue(os.Getenv("JWT_CONFIG"), "jwt.toml")
@@ -28,6 +29,7 @@ func main() {
 		log.Fatal(err)
 	}
 	mwf.CookiePrefix = mwforumCookiePrefix
+	mwf.TablePrefix = mwforumTablePrefix
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		user, err := mwf.AuthenticateUser(r)

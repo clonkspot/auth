@@ -14,6 +14,7 @@ import (
 type Connection struct {
 	db           *sql.DB
 	CookiePrefix string
+	TablePrefix  string
 }
 
 type User struct {
@@ -51,7 +52,7 @@ func (mwf *Connection) AuthenticateUser(req *http.Request) (*User, error) {
 	}
 	var user User
 	var loginAuth string
-	err = mwf.db.QueryRow("select userName, email, loginAuth from users where id = ?", parts[0]).Scan(&user.Username, &user.Email, &loginAuth)
+	err = mwf.db.QueryRow("select userName, email, loginAuth from "+mwf.TablePrefix+"users where id = ?", parts[0]).Scan(&user.Username, &user.Email, &loginAuth)
 	if err != nil {
 		return nil, err
 	}
@@ -79,9 +80,9 @@ func (mwf *Connection) verifyPassword(username, password string) (*authData, err
 	var row *sql.Row
 	// username can be either an email address or the username
 	if strings.ContainsRune(username, '@') {
-		row = mwf.db.QueryRow("select id, password, salt, loginAuth from users where email = ?", username)
+		row = mwf.db.QueryRow("select id, password, salt, loginAuth from "+mwf.TablePrefix+"users where email = ?", username)
 	} else {
-		row = mwf.db.QueryRow("select id, password, salt, loginAuth from users where userName = ?", username)
+		row = mwf.db.QueryRow("select id, password, salt, loginAuth from "+mwf.TablePrefix+"users where userName = ?", username)
 	}
 	var id int32
 	var pwhash, salt, loginAuth string
