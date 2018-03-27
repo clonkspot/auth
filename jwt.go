@@ -72,9 +72,8 @@ func handleJwt(mwf *mwforum.Connection) func(w http.ResponseWriter, r *http.Requ
 		// Now, find our local user.
 		user, err := mwf.AuthenticateUser(r)
 		if err != nil {
-			// TODO: Show login page
-			w.WriteHeader(401)
-			io.WriteString(w, err.Error())
+			// The user will have to enter username and password.
+			showLoginPage(w, loginPageData{ReturnURL: r.URL.EscapedPath() + "?" + r.URL.RawQuery})
 			return
 		}
 

@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+	<head>
+		<title>{{.Title}}</title>
+		<link rel="stylesheet" href="https://www.openclonk.org/homepage/common.css">
+		<style>
+			h1 {
+				margin-top: 0;
+			}
+
+			.error {
+				background: rgba(254, 68, 43, 0.6);
+				padding: 0.5em;
+				border-radius: 0.2em;
+			}
+
+			form#login {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+			}
+			form#login input[type=submit] {
+				grid-column: 2;
+			}
+		</style>
+	</head>
+	<body>
+		{{ template "header.html" }}
+
+		<div class="paperbox">
+			{{ template "content" . }}
+		</div>
+
+		{{ template "botter.html" }}
+	</body>
+</html>
+{{/* vim: set ft=gohtmltmpl: */}}

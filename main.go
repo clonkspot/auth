@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"github.com/clonkspot/auth/mwforum"
 	"io"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/clonkspot/auth/mwforum"
 )
 
 var mwforumDb = defaultValue(os.Getenv("MWFORUM_DB"), "/mwforum")
@@ -32,16 +32,21 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		user, err := mwf.AuthenticateUser(r)
 		if err != nil {
-			w.WriteHeader(401)
-			io.WriteString(w, err.Error())
+			switch err {
+			case mwforum.ErrNoLoginCookie, mwforum.ErrLoginCookieMalformed, mwforum.ErrLoginCookieInvalid:
+				showLoginPage(w, loginPageData{ReturnURL: "/"})
+			default:
+				w.WriteHeader(500)
+				io.WriteString(w, err.Error())
+			}
 			return
 		}
-		w.WriteHeader(200)
-		io.WriteString(w, fmt.Sprintln("User", user.Username, "Email", user.Email))
+		showIndexPage(w, indexPageData{Username: user.Username})
 	})
 
 	http.HandleFunc("/jwt", handleJwt(mwf))
 	http.HandleFunc("/login", handleLogin(mwf))
+	http.HandleFunc("/logout", handleLogout(mwf))
 
 	port := os.Getenv("PORT")
 	log.Print("Listening on port " + port)

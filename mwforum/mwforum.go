@@ -67,7 +67,7 @@ func (mwf *Connection) LoginHandler(username, password string, w http.ResponseWr
 	if err != nil {
 		return err
 	}
-	w.Header().Add("Set-Cookie", fmt.Sprintf("%slogin=%d:%s;secure;expires=Wed, 31-Dec-2031 00:00:00 GMT; ", mwf.CookiePrefix, auth.ID, auth.LoginAuth))
+	w.Header().Add("Set-Cookie", fmt.Sprintf("%slogin=%d:%s;secure;httponly;expires=Wed, 31-Dec-2031 00:00:00 GMT; ", mwf.CookiePrefix, auth.ID, auth.LoginAuth))
 	return nil
 }
 
@@ -86,8 +86,12 @@ func (mwf *Connection) verifyPassword(username, password string) (*authData, err
 	var id int32
 	var pwhash, salt, loginAuth string
 	err := row.Scan(&id, &pwhash, &salt, &loginAuth)
-	if err != nil {
+	switch err {
+	case sql.ErrNoRows:
+		return nil, ErrUserNotFound
+	default:
 		return nil, err
+	case nil: // ok
 	}
 	// compare password hashes
 	if hashPassword(password, salt) != pwhash {
