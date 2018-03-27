@@ -21,7 +21,8 @@ type JwtSite struct {
 }
 
 type JwtConfig struct {
-	Sites map[string]JwtSite
+	Issuer string
+	Sites  map[string]JwtSite
 }
 
 func loadJwtConfig(path string) (*JwtConfig, error) {
@@ -79,7 +80,7 @@ func handleJwt(mwf *mwforum.Connection) func(w http.ResponseWriter, r *http.Requ
 
 		// Generate token.
 		resToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"iss":   "clonkspot",
+			"iss":   cfg.Issuer,
 			"aud":   reqClaims.Issuer,
 			"iat":   time.Now().Unix(),
 			"exp":   time.Now().Add(site.decodedExp).Unix(),

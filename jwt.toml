@@ -1,3 +1,5 @@
+issuer = "clonkspot"
+
 [sites.example]
 key = "Zm9vYmFy" # foobar
 url = "https://example.com/jwt"
