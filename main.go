@@ -13,7 +13,12 @@ var mwforumDb = defaultValue(os.Getenv("MWFORUM_DB"), "/mwforum")
 var mwforumTablePrefix = defaultValue(os.Getenv("MWFORUM_TABLE_PREFIX"), "")
 var mwforumCookiePrefix = defaultValue(os.Getenv("MWFORUM_COOKIE_PREFIX"), "mwf_")
 
+// basePath is needed when mounting the application on sub-paths.
+// example: /api/auth
+var basePath = os.Getenv("BASE_PATH")
+
 var jwtConfigPath = defaultValue(os.Getenv("JWT_CONFIG"), "jwt.toml")
+var discourseConfigPath = defaultValue(os.Getenv("DISCOURSE_CONFIG"), "")
 
 func defaultValue(val, def string) string {
 	if val == "" {
@@ -49,6 +54,10 @@ func main() {
 	http.HandleFunc("/jwt", handleJwt(mwf))
 	http.HandleFunc("/login", handleLogin(mwf))
 	http.HandleFunc("/logout", handleLogout(mwf))
+
+	if discourseConfigPath != "" {
+		http.HandleFunc("/discourse", handleDiscourseSSO(mwf))
+	}
 
 	port := os.Getenv("PORT")
 	log.Print("Listening on port " + port)

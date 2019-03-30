@@ -22,6 +22,7 @@ func showLoginPage(w http.ResponseWriter, data loginPageData) {
 		"Title":     "Login",
 		"ReturnURL": data.ReturnURL,
 		"Error":     data.loginError,
+		"BasePath":  basePath,
 	})
 	if err != nil {
 		io.WriteString(w, err.Error())
@@ -38,6 +39,7 @@ func showIndexPage(w http.ResponseWriter, data indexPageData) {
 	err := indexPageTmpl.ExecuteTemplate(w, "base.html", map[string]interface{}{
 		"Title":    "OpenClonk",
 		"Username": data.Username,
+		"BasePath": basePath,
 	})
 	if err != nil {
 		io.WriteString(w, err.Error())

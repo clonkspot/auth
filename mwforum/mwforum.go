@@ -18,8 +18,11 @@ type Connection struct {
 }
 
 type User struct {
+	ID       string
 	Username string
+	Realname string
 	Email    string
+	Admin    bool
 }
 
 type authData struct {
@@ -27,7 +30,7 @@ type authData struct {
 	LoginAuth string
 }
 
-// Connects to the mwforum database specified by the dsn.
+// Connect connects to the mwforum database specified by the dsn.
 func Connect(dsn string) (*Connection, error) {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
@@ -40,7 +43,7 @@ var ErrNoLoginCookie = errors.New("mwforum: no login cookie")
 var ErrLoginCookieMalformed = errors.New("mwforum: malformed login cookie")
 var ErrLoginCookieInvalid = errors.New("mwforum: invalid login cookie")
 
-// Checks whether a user is authenticated, returning that user.
+// AuthenticateUser checks whether a user is authenticated, returning that user.
 func (mwf *Connection) AuthenticateUser(req *http.Request) (*User, error) {
 	cookie, err := req.Cookie(mwf.CookiePrefix + "login")
 	if err != nil {
@@ -51,13 +54,18 @@ func (mwf *Connection) AuthenticateUser(req *http.Request) (*User, error) {
 		return nil, ErrLoginCookieMalformed
 	}
 	var user User
+	user.ID = parts[0]
 	var loginAuth string
-	err = mwf.db.QueryRow("select userName, email, loginAuth from "+mwf.TablePrefix+"users where id = ?", parts[0]).Scan(&user.Username, &user.Email, &loginAuth)
+	var admin int
+	err = mwf.db.QueryRow("select userName, email, realName, admin, loginAuth from "+mwf.TablePrefix+"users where id = ?", user.ID).Scan(&user.Username, &user.Email, &user.Realname, &admin, &loginAuth)
 	if err != nil {
 		return nil, err
 	}
 	if loginAuth != parts[1] {
 		return nil, ErrLoginCookieInvalid
+	}
+	if admin != 0 {
+		user.Admin = true
 	}
 	return &user, nil
 }

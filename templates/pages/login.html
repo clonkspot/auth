@@ -3,12 +3,12 @@
 {{ with .Error }}
 	<p class="error">{{.}}</p>
 {{ end }}
-<form id="login" action="/login" method="post">
+<form id="login" action="{{.BasePath}}/login" method="post">
 	<label>Username</label>
 	<input type="text" name="username">
 	<label>Password</label>
 	<input type="password" name="password">
-	<input type="hidden" name="returnURL" value="{{.ReturnURL}}">
+	<input type="hidden" name="returnURL" value="{{.BasePath}}{{.ReturnURL}}">
 	<input type="submit">
 </form>
 {{ end }}
