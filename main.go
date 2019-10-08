@@ -13,6 +13,9 @@ var mwforumDb = defaultValue(os.Getenv("MWFORUM_DB"), "/mwforum")
 var mwforumTablePrefix = defaultValue(os.Getenv("MWFORUM_TABLE_PREFIX"), "")
 var mwforumCookiePrefix = defaultValue(os.Getenv("MWFORUM_COOKIE_PREFIX"), "mwf_")
 
+// templatePath must contain a base.html template.
+var templatePath = os.Getenv("TEMPLATE_PATH")
+
 // basePath is needed when mounting the application on sub-paths.
 // example: /api/auth
 var basePath = os.Getenv("BASE_PATH")
@@ -23,12 +26,15 @@ var discourseConfigPath = defaultValue(os.Getenv("DISCOURSE_CONFIG"), "")
 func defaultValue(val, def string) string {
 	if val == "" {
 		return def
-	} else {
-		return val
 	}
+	return val
 }
 
 func main() {
+	if templatePath == "" {
+		log.Fatal("$TEMPLATE_PATH is not set")
+	}
+
 	mwf, err := mwforum.Connect(mwforumDb)
 	if err != nil {
 		log.Fatal(err)

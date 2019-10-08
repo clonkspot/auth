@@ -7,3 +7,5 @@ require (
 	// Actually: v1.3
 	github.com/go-sql-driver/mysql v0.0.0-20170224193804-a0583e0143b16
 )
+
+go 1.13

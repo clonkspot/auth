@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-var tmpl = template.Must(template.ParseGlob("templates/*.html"))
+var tmpl = template.Must(template.ParseGlob(templatePath + "/*.html"))
 var loginPageTmpl = template.Must(template.Must(tmpl.Clone()).ParseFiles("templates/pages/login.html"))
 var indexPageTmpl = template.Must(template.Must(tmpl.Clone()).ParseFiles("templates/pages/index.html"))
 
