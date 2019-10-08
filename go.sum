@@ -2,5 +2,9 @@ github.com/BurntSushi/toml v0.3.0 h1:e1/Ivsx3Z0FVTV0NSOv/aVgbUWyQuzj7DDnFblkRvsY
 github.com/BurntSushi/toml v0.3.0/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/dgrijalva/jwt-go v0.0.0-20170224193804-d2709f9f1f31ebcda h1:nQscdkrTClxLillq/Z0KSFyscQHPvsUPEIYQuMgynHw=
 github.com/dgrijalva/jwt-go v0.0.0-20170224193804-d2709f9f1f31ebcda/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
+github.com/dgrijalva/jwt-go v3.0.0+incompatible h1:nfVqwkkhaRUethVJaQf5TUFdFr3YUF4lJBTf/F2XwVI=
+github.com/dgrijalva/jwt-go v3.0.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/go-sql-driver/mysql v0.0.0-20170224193804-a0583e0143b16 h1:OLovFk/G3SJInPEQia05xV7oa9aQ6gz1slk6JbncDjc=
 github.com/go-sql-driver/mysql v0.0.0-20170224193804-a0583e0143b16/go.mod h1:zAC/RDZ24gD3HViQzih4MyKcchzm+sOG5ZlKdlhCg5w=
+github.com/go-sql-driver/mysql v1.4.1 h1:g24URVg0OFbNUTx9qqY1IRZ9D9z3iPyi5zKhQZpNwpA=
+github.com/go-sql-driver/mysql v1.4.1/go.mod h1:zAC/RDZ24gD3HViQzih4MyKcchzm+sOG5ZlKdlhCg5w=
