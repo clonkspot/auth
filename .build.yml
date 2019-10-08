@@ -1,0 +1,24 @@
+image: archlinux
+packages:
+  - go
+  - rsync
+secrets:
+  - 3612b5e9-3819-4f44-ad00-bd5bf63e8dad # deploy key
+sources:
+  - https://github.com/clonkspot/auth
+
+tasks:
+  - build: |
+      cd auth
+      go build
+  - test: |
+      cd auth
+      go test ./...
+      [[ "$GITHUB_REF" = refs/heads/master ]] || complete-build
+  - deploy: |
+      cd auth
+      sshopts="ssh -o StrictHostKeyChecking=no"
+      host=clnk@lupus.uberspace.de
+      rsync --rsh="$sshopts" -rv templates/ "$host:~/deploy/auth/templates/"
+      rsync --rsh="$sshopts" -rv auth "$host:~/deploy/auth/auth"
+      $sshopts $host svc -du '~/service/auth'
