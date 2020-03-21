@@ -1,12 +1,13 @@
 package main
 
 import (
-	"io"
 	"log"
-	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/clonkspot/auth/mwforum"
+	"github.com/gin-contrib/multitemplate"
+	"github.com/gin-gonic/gin"
 )
 
 var mwforumDb = defaultValue(os.Getenv("MWFORUM_DB"), "/mwforum")
@@ -42,30 +43,63 @@ func main() {
 	mwf.CookiePrefix = mwforumCookiePrefix
 	mwf.TablePrefix = mwforumTablePrefix
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		user, err := mwf.AuthenticateUser(r)
+	r := gin.Default()
+	templates, err := loadTemplates(templatePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	r.HTMLRender = templates
+
+	r.GET("/", func(c *gin.Context) {
+		user, err := mwf.AuthenticateUser(c.Request)
 		if err != nil {
+			log.Print(err)
 			switch err {
 			case mwforum.ErrNoLoginCookie, mwforum.ErrLoginCookieMalformed, mwforum.ErrLoginCookieInvalid:
-				showLoginPage(w, loginPageData{ReturnURL: "/"})
+				showLoginPage(c, loginPageData{ReturnURL: "/"})
 			default:
-				w.WriteHeader(500)
-				io.WriteString(w, err.Error())
+				c.AbortWithError(500, err)
 			}
 			return
 		}
-		showIndexPage(w, indexPageData{Username: user.Username})
+		showIndexPage(c, indexPageData{Username: user.Username})
 	})
 
-	http.HandleFunc("/jwt", handleJwt(mwf))
-	http.HandleFunc("/login", handleLogin(mwf))
-	http.HandleFunc("/logout", handleLogout(mwf))
+	handleLogin(r, mwf)
+	handleJwt(r, mwf)
 
 	if discourseConfigPath != "" {
-		http.HandleFunc("/discourse", handleDiscourseSSO(mwf))
+		handleDiscourseSSO(r, mwf)
 	}
 
 	port := os.Getenv("PORT")
 	log.Print("Listening on port " + port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	if os.Getenv("TLS_CERT") != "" {
+		r.RunTLS(":"+port, os.Getenv("TLS_CERT"), os.Getenv("TLS_KEY"))
+	} else {
+		r.Run(":" + port)
+	}
+}
+
+// loadTemplates loads the HTML templates. dir is the base directory, for example "templates/clonkspot".
+func loadTemplates(dir string) (multitemplate.Renderer, error) {
+	r := multitemplate.NewRenderer()
+	base, err := filepath.Glob(dir + "/*.html")
+	if err != nil {
+		return r, err
+	}
+
+	pages, err := filepath.Glob("templates/pages/*.html")
+	if err != nil {
+		return r, err
+	}
+
+	for _, page := range pages {
+		templates := make([]string, len(base))
+		copy(templates, base)
+		templates = append(templates, page)
+		r.AddFromFiles(filepath.Base(page), templates...)
+	}
+
+	return r, nil
 }

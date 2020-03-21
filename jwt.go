@@ -3,13 +3,13 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/BurntSushi/toml"
 	"github.com/clonkspot/auth/mwforum"
-	"github.com/dgrijalva/jwt-go"
-	"io"
-	"log"
-	"net/http"
-	"time"
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/gin"
 )
 
 type JwtSite struct {
@@ -43,14 +43,14 @@ func loadJwtConfig(path string) (*JwtConfig, error) {
 	return &cfg, nil
 }
 
-func handleJwt(mwf *mwforum.Connection) func(w http.ResponseWriter, r *http.Request) {
+func handleJwt(r gin.IRouter, mwf *mwforum.Connection) {
 	cfg, err := loadJwtConfig(jwtConfigPath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return func(w http.ResponseWriter, r *http.Request) {
+	r.GET("/jwt", func(c *gin.Context) {
 		// Expect a JWT in the request.
-		requestToken := r.URL.RawQuery
+		requestToken := c.Request.URL.RawQuery
 		reqClaims := jwt.StandardClaims{}
 		var site *JwtSite
 		reqToken, err := jwt.ParseWithClaims(requestToken, &reqClaims, func(token *jwt.Token) (interface{}, error) {
@@ -64,16 +64,15 @@ func handleJwt(mwf *mwforum.Connection) func(w http.ResponseWriter, r *http.Requ
 			return nil, fmt.Errorf("Unknown issuer: %s", reqClaims.Issuer)
 		})
 		if err != nil || !reqToken.Valid {
-			w.WriteHeader(400)
-			io.WriteString(w, err.Error())
+			c.AbortWithError(400, err)
 			return
 		}
 
 		// Now, find our local user.
-		user, err := mwf.AuthenticateUser(r)
+		user, err := mwf.AuthenticateUser(c.Request)
 		if err != nil {
 			// The user will have to enter username and password.
-			showLoginPage(w, loginPageData{ReturnURL: r.URL.EscapedPath() + "?" + r.URL.RawQuery})
+			showLoginPage(c, loginPageData{ReturnURL: c.Request.URL.EscapedPath() + "?" + c.Request.URL.RawQuery})
 			return
 		}
 
@@ -89,11 +88,10 @@ func handleJwt(mwf *mwforum.Connection) func(w http.ResponseWriter, r *http.Requ
 		})
 		ss, err := resToken.SignedString(site.decodedKey)
 		if err != nil {
-			w.WriteHeader(500)
-			io.WriteString(w, err.Error())
+			c.AbortWithError(500, err)
+			return
 		}
 		// Redirect back to requester.
-		w.Header().Add("Location", site.URL+"?"+ss)
-		w.WriteHeader(302)
-	}
+		c.Redirect(302, site.URL+"?"+ss)
+	})
 }

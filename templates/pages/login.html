@@ -5,7 +5,7 @@
 {{ end }}
 <form id="login" action="{{.BasePath}}/login" method="post">
 	<label>Username</label>
-	<input type="text" name="username">
+	<input type="text" name="username" value="{{.Username}}">
 	<label>Password</label>
 	<input type="password" name="password">
 	<input type="hidden" name="returnURL" value="{{.BasePath}}{{.ReturnURL}}">

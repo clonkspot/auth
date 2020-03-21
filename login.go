@@ -1,57 +1,45 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 
 	"github.com/clonkspot/auth/mwforum"
+	"github.com/gin-gonic/gin"
 )
 
 type loginRequest struct {
-	Username  string
-	Password  string
-	ReturnURL string
+	Username  string `form:"username"`
+	Password  string `form:"password"`
+	ReturnURL string `form:"returnURL"`
 }
 
 // handleLogin handles the /login route.
 // GET  => shows the login page
 // POST => handles login via POSTing JSON or a form.
-func handleLogin(mwf *mwforum.Connection) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case "GET":
-			w.Header().Add("Location", "/")
-			w.WriteHeader(302)
-		case "POST":
-			var req loginRequest
-			switch r.Header.Get("Content-Type") {
-			case "application/json":
-				dec := json.NewDecoder(r.Body)
-				if err := dec.Decode(&req); err != nil {
-					w.WriteHeader(http.StatusBadRequest)
-					return
-				}
-				if err := mwf.LoginHandler(req.Username, req.Password, w); err != nil {
-					w.Header().Set("Content-Type", "application/json")
-					w.WriteHeader(http.StatusForbidden)
-					res, _ := json.Marshal(map[string]string{
+func handleLogin(r gin.IRouter, mwf *mwforum.Connection) {
+	r.GET("/login", func(c *gin.Context) {
+		c.Redirect(302, "/")
+	})
+
+	r.POST("/login", func(c *gin.Context) {
+		var req loginRequest
+		switch c.GetHeader("Content-Type") {
+		case "application/json":
+			if c.BindJSON(&req) == nil {
+				if err := mwf.LoginHandler(req.Username, req.Password, c.Writer); err != nil {
+					c.JSON(http.StatusForbidden, map[string]string{
 						"message": err.Error(),
 					})
-					w.Write(res)
 					return
 				}
-				w.WriteHeader(http.StatusNoContent)
-			case "application/x-www-form-urlencoded":
-				req.Username = r.PostFormValue("username")
-				req.Password = r.PostFormValue("password")
-				req.ReturnURL = r.PostFormValue("returnURL")
-				if err := mwf.LoginHandler(req.Username, req.Password, w); err != nil {
-					showLoginPage(w, loginPageData{
-						ReturnURL:  req.ReturnURL,
-						loginError: err,
-					})
+				c.Status(http.StatusNoContent)
+			}
+		case "application/x-www-form-urlencoded":
+			if c.Bind(&req) == nil {
+				if err := mwf.LoginHandler(req.Username, req.Password, c.Writer); err != nil {
+					showLoginPage(c, loginPageData{Username: req.Username, loginError: err, ReturnURL: "/"})
 					return
 				}
 				returnURL := "/"
@@ -65,22 +53,16 @@ func handleLogin(mwf *mwforum.Connection) func(w http.ResponseWriter, r *http.Re
 						returnURL += "#" + u.Fragment
 					}
 				}
-				w.Header().Add("Location", req.ReturnURL)
-				w.WriteHeader(302)
-			default:
-				w.WriteHeader(http.StatusUnsupportedMediaType)
-				return
+				c.Redirect(302, req.ReturnURL)
 			}
 		default:
-			w.WriteHeader(http.StatusMethodNotAllowed)
+			c.Status(http.StatusUnsupportedMediaType)
+			return
 		}
-	}
-}
+	})
 
-func handleLogout(mwf *mwforum.Connection) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Set-Cookie", fmt.Sprintf("%slogin=deleted;secure;httponly;expires=Thu, 01 Jan 1970 00:00:00 GMT; ", mwf.CookiePrefix))
-		w.Header().Add("Location", "/")
-		w.WriteHeader(302)
-	}
+	r.GET("/logout", func(c *gin.Context) {
+		c.Writer.Header().Add("Set-Cookie", fmt.Sprintf("%slogin=deleted;secure;httponly;expires=Thu, 01 Jan 1970 00:00:00 GMT; ", mwf.CookiePrefix))
+		c.Redirect(302, "/")
+	})
 }
