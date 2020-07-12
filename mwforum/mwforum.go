@@ -23,6 +23,7 @@ type User struct {
 	Realname string
 	Email    string
 	Admin    bool
+	Groups   []string
 }
 
 type authData struct {
@@ -59,7 +60,7 @@ func (mwf *Connection) AuthenticateUser(req *http.Request) (*User, error) {
 	var admin int
 	err = mwf.db.QueryRow("select userName, email, realName, admin, loginAuth from "+mwf.TablePrefix+"users where id = ?", user.ID).Scan(&user.Username, &user.Email, &user.Realname, &admin, &loginAuth)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error fetching user: %w", err)
 	}
 	if loginAuth != parts[1] {
 		return nil, ErrLoginCookieInvalid
@@ -67,7 +68,33 @@ func (mwf *Connection) AuthenticateUser(req *http.Request) (*User, error) {
 	if admin != 0 {
 		user.Admin = true
 	}
+	user.Groups, err = mwf.fetchGroups(user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching groups: %w", err)
+	}
 	return &user, nil
+}
+
+// fetchGroups retrieves all groups (by their title) of the user with the given id.
+func (mwf *Connection) fetchGroups(id string) ([]string, error) {
+	rows, err := mwf.db.Query("select title from mwf_groups join mwf_groupMembers on id = groupId where userId = ?", id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var group string
+	var groups []string
+	for rows.Next() {
+		err := rows.Scan(&group)
+		if err != nil {
+			return nil, err
+		}
+		groups = append(groups, group)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return groups, nil
 }
 
 // Tries to log the user in, setting a login cookie.

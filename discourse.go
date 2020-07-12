@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/clonkspot/auth/mwforum"
@@ -74,6 +75,7 @@ func handleDiscourseSSO(r gin.IRouter, mwf *mwforum.Connection) {
 		payload.Set("external_id", user.ID)
 		payload.Set("username", user.Username)
 		payload.Set("name", user.Realname)
+		payload.Set("groups", strings.Join(user.Groups, ","))
 		if user.Admin {
 			payload.Set("admin", "true")
 		} else {
