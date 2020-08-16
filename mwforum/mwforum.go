@@ -77,7 +77,7 @@ func (mwf *Connection) AuthenticateUser(req *http.Request) (*User, error) {
 
 // fetchGroups retrieves all groups (by their title) of the user with the given id.
 func (mwf *Connection) fetchGroups(id string) ([]string, error) {
-	rows, err := mwf.db.Query("select title from mwf_groups join mwf_groupMembers on id = groupId where userId = ?", id)
+	rows, err := mwf.db.Query("select title from "+mwf.TablePrefix+"groups join "+mwf.TablePrefix+"groupMembers on id = groupId where userId = ?", id)
 	if err != nil {
 		return nil, err
 	}
