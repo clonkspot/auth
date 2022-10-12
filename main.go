@@ -73,11 +73,11 @@ func main() {
 	}
 
 	port := os.Getenv("PORT")
-	log.Print("Listening on port " + port)
+	log.Print("Listening on " + port)
 	if os.Getenv("TLS_CERT") != "" {
-		r.RunTLS(":"+port, os.Getenv("TLS_CERT"), os.Getenv("TLS_KEY"))
+		r.RunTLS(port, os.Getenv("TLS_CERT"), os.Getenv("TLS_KEY"))
 	} else {
-		r.Run(":" + port)
+		r.Run(port)
 	}
 }
 
