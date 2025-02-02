@@ -9,7 +9,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/clonkspot/auth/mwforum"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type JwtSite struct {
@@ -51,17 +51,21 @@ func handleJwt(r gin.IRouter, mwf *mwforum.Connection) {
 	r.GET("/jwt", func(c *gin.Context) {
 		// Expect a JWT in the request.
 		requestToken := c.Request.URL.RawQuery
-		reqClaims := jwt.StandardClaims{}
 		var site *JwtSite
-		reqToken, err := jwt.ParseWithClaims(requestToken, &reqClaims, func(token *jwt.Token) (interface{}, error) {
+		var issuer string
+		reqToken, err := jwt.Parse(requestToken, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 			}
-			if s, ok := cfg.Sites[reqClaims.Issuer]; ok {
+			issuer, err = token.Claims.GetIssuer()
+			if err != nil {
+				return nil, fmt.Errorf("Could not get issuer: %w", err)
+			}
+			if s, ok := cfg.Sites[issuer]; ok {
 				site = &s
 				return site.decodedKey, nil
 			}
-			return nil, fmt.Errorf("Unknown issuer: %s", reqClaims.Issuer)
+			return nil, fmt.Errorf("Unknown issuer: %s", issuer)
 		})
 		if err != nil || !reqToken.Valid {
 			c.AbortWithError(400, err)
@@ -79,10 +83,9 @@ func handleJwt(r gin.IRouter, mwf *mwforum.Connection) {
 		// Generate token.
 		resToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 			"iss":   cfg.Issuer,
-			"aud":   reqClaims.Issuer,
+			"aud":   issuer,
 			"iat":   time.Now().Unix(),
 			"exp":   time.Now().Add(site.decodedExp).Unix(),
-			"jti":   reqClaims.Id,
 			"sub":   user.Username,
 			"email": user.Email,
 		})
