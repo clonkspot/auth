@@ -1,2 +1,4 @@
 /vendor
 /auth
+/result*
+/.direnv
